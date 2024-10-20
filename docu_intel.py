@@ -17,6 +17,7 @@ summarizer_client = AzureOpenAI(
     api_version="2024-02-15-preview",  
 )  
   
+# Function to extract insights using Phi-3.5-Vision  
 def extract_insights_phi_vision(pdf_data):  
     endpoint = "https://Phi-3-5-vision-instruct-pxlkq.eastus.models.ai.azure.com/v1/chat/completions"  
     headers = {  
@@ -43,12 +44,13 @@ def extract_insights_phi_vision(pdf_data):
             response = requests.post(endpoint, headers=headers, json=data)  
             response.raise_for_status()  
             content = response.json()['choices'][0]['message']['content']  
-            insights.append((page_num + 1, content))  
+            insights.append((page_num + 1, content))  # Store page number and content  
         except requests.exceptions.RequestException as e:  
             st.error(f"Error on page {page_num + 1}: {str(e)}")  
       
     return insights  
   
+# Function to extract text from PDF using Azure Form Recognizer  
 def extract_text_from_pdf(pdf_data):  
     form_recognizer_endpoint = "https://patentocr.cognitiveservices.azure.com/"  
     form_recognizer_api_key = "cd6b8996d93447be88d995729c924bcb"  
@@ -77,6 +79,7 @@ def extract_text_from_pdf(pdf_data):
         st.error(f"An error occurred: {str(e)}")  
         return None  
   
+# Function to compare insights using Azure OpenAI  
 def compare_insights(insights_phi, insights_azure):  
     comparison_prompt = (  
         "Compare the following insights:\n"  
@@ -99,7 +102,7 @@ def compare_insights(insights_phi, insights_azure):
                 {"role": "user", "content": comparison_prompt}  
             ],  
             max_tokens=4096,  
-            temperature=0.1,  # Lower temperature for consistency  
+            temperature=0,  
             top_p=1,  
             frequency_penalty=0,  
             presence_penalty=0,  
@@ -111,23 +114,28 @@ def compare_insights(insights_phi, insights_azure):
         st.error(f"Error comparing insights: {str(e)}")  
         return "Comparison failed."  
   
+# Function to create a Word document  
 def create_word_document(insights_phi, insights_azure, comparison_result):  
     doc = Document()  
     doc.add_heading('PDF Insight Comparison', 0)  
   
+    # Add insights from Phi-3.5-Vision with page numbers  
     doc.add_heading('Insights from Phi-3.5-Vision', level=1)  
     for page_num, content in insights_phi:  
         doc.add_heading(f'Page {page_num}', level=2)  
         doc.add_paragraph(content)  
   
+    # Add insights from Azure Document Intelligence with page numbers  
     doc.add_heading('Insights from Azure Document Intelligence', level=1)  
     for page_num, content in insights_azure.items():  
         doc.add_heading(f'Page {page_num}', level=2)  
         doc.add_paragraph(content)  
   
+    # Add comparison results  
     doc.add_heading('Comparison Results', level=1)  
     doc.add_paragraph(comparison_result)  
   
+    # Add a table for comparison results  
     table = doc.add_table(rows=1, cols=3)  
     hdr_cells = table.rows[0].cells  
     hdr_cells[0].text = 'Source'  
@@ -150,8 +158,6 @@ def create_word_document(insights_phi, insights_azure, comparison_result):
   
 # Streamlit App  
 st.title("PDF Insight Comparison App")  
-st.write("Extract and compare insights using Phi-3.5-Vision and Azure Document Intelligence.")  
-  
 uploaded_file = st.file_uploader("Upload a PDF file", type="pdf")  
   
 if uploaded_file is not None:  
