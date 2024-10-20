@@ -1,0 +1,7 @@
+streamlit
+requests
+pypdf2
+azure-ai-formrecognizer
+azure-core
+openai
+python-docx
