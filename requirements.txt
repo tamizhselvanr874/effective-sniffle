@@ -1,7 +1,9 @@
 streamlit
 requests
-pypdf2
+PyPDF2
 azure-ai-formrecognizer
 azure-core
 openai
 python-docx
+pymupdf
+pillow
