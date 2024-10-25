@@ -7,4 +7,4 @@ openai
 python-docx
 pymupdf
 pillow
-surya-ocr
+surya
